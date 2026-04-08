@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1A2B 經典猜數字</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f4f7f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin-bottom: 1.5rem; }
+        .input-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem; }
+        input { width: 50px; height: 50px; text-align: center; font-size: 1.5rem; border: 2px solid #ddd; border-radius: 8px; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: var(--primary-color); }
+        button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; width: 100%; transition: opacity 0.3s; }
+        button:hover { opacity: 0.9; }
+        .history { margin-top: 1.5rem; text-align: left; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 1rem; }
+        .log-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; }
+        .result-a { color: #e74c3c; font-weight: bold; }
+        .result-b { color: #f39c12; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>猜數字遊戲</h1>
+    <p>請輸入 4 個不重複的數字</p>
+    <p>數字與位置皆答對者，獲得一個A</p>
+    <p>數字答對但位置皆答錯者，獲得一個B</p>
+    
+    <div class="input-group" id="inputContainer">
+        <input type="text" maxlength="1" inputmode="numeric">
+        <input type="text" maxlength="1" inputmode="numeric">
+        <input type="text" maxlength="1" inputmode="numeric">
+        <input type="text" maxlength="1" inputmode="numeric">
+    </div>
+
+    <button onclick="checkGuess()">送出答案</button>
+    <button onclick="resetGame()" style="margin-top: 10px; background: #95a5a6;">重置遊戲</button>
+
+    <div class="history" id="history">
+        <strong>猜測紀錄：</strong>
+    </div>
+</div>
+
+<script>
+    let answer = [];
+    let attempts = 0;
+
+    // 初始化遊戲：產生 4 個不重複數字
+    function resetGame() {
+        answer = [];
+        let nums = [0,1,2,3,4,5,6,7,8,9];
+        for(let i=0; i<4; i++) {
+            let idx = Math.floor(Math.random() * nums.length);
+            answer.push(nums.splice(idx, 1)[0]);
+        }
+        attempts = 0;
+        document.getElementById('history').innerHTML = "<strong>猜測紀錄：</strong>";
+        document.querySelectorAll('input').forEach(i => i.value = "");
+        console.log("密鑰 (調試用):", answer); // 開發者工具可以看到答案
+    }
+
+    function checkGuess() {
+        const inputs = document.querySelectorAll('input');
+        let guess = Array.from(inputs).map(i => parseInt(i.value));
+
+        // 檢查輸入是否合法
+        if (guess.some(isNaN)) { alert("請填滿四個數字！"); return; }
+        if (new Set(guess).size !== 4) { alert("數字不能重複！"); return; }
+
+        attempts++;
+        let a = 0;
+        let b = 0;
+
+        // 核心邏輯 (與 Python 版一致)
+        for(let i=0; i<4; i++) {
+            if(guess[i] === answer[i]) {
+                a++;
+            } else if(answer.includes(guess[i])) {
+                b++;
+            }
+        }
+
+        updateHistory(guess.join(''), a, b);
+
+        if(a === 4) {
+            alert(`恭喜！你猜對了！總共嘗試了 ${attempts} 次。`);
+            resetGame();
+        }
+    }
+
+    function updateHistory(guessStr, a, b) {
+        const history = document.getElementById('history');
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `<span>第 ${attempts} 次: ${guessStr}</span> 
+                          <span><span class="result-a">${a}A</span><span class="result-b">${b}B</span></span>`;
+        history.prepend(item);
+    }
+
+    // 自動跳格功能
+    document.querySelectorAll('input').forEach((input, idx, arr) => {
+        input.oninput = function() {
+            if(this.value && idx < 3) arr[idx+1].focus();
+        };
+    });
+
+    resetGame();
+</script>
+
+</body>
+</html>
